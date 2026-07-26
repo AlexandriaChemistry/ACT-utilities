@@ -1,0 +1,65 @@
+#!/usr/bin/env python3
+
+import argparse, os, sys, xmltodict
+
+debug = False
+achem = "alexandria_chemistry"
+inter = "interaction"
+
+def parseArguments():
+    desc = '''This script will read two ACT force field files (in XML format)
+and replace a selected interaction block in one force field (ff1) by the corresponding
+block from the second file (ff2). Then, the resulting FF is written to a third file.
+In this way it is possible to train e.g. electrostatics and induction once
+and then use that with different Van der Waals interaction types.
+'''
+    parser = argparse.ArgumentParser(description=desc)
+ 
+    parser.add_argument("-ff1", "--ff1", help="The first force field file", type=str, default=None)
+    parser.add_argument("-ff2", "--ff2", help="The second force field file.", type=str, default=None)
+    defout = "ffout.xml"
+    parser.add_argument("-o", "--outfile", help="Output force field file. Default "+defout, type=str, default=defout)
+    definter = "VANDERWAALS"
+    parser.add_argument("-inter", "--interaction", help="Interaction type, e.g. BONDS, default "+definter, type=str, default=definter)
+    return parser.parse_args()
+
+def read_ff(filenm:str)->dict:
+    if not os.path.exists(filenm):
+        sys.exit(f"{filenm} does not exist")
+    with open(filenm) as fd:
+        doc = xmltodict.parse(fd.read())
+        if not achem in doc:
+            sys.exit(f"{filenm} is not a valid ACT force field file")
+        return doc
+    sys.exit(f"Parsing {filenm} failed")
+
+if __name__ == "__main__":
+    args = parseArguments()
+    if not args.ff1 or not args.ff2:
+        sys.exit("Please provide both input files")
+    ff1 = read_ff(args.ff1)
+    ff2 = read_ff(args.ff2)
+    # Now look up the interactions in ff2
+    ff2inter = None
+    for elem in ff2[achem]:
+        if elem == inter:
+            for myinter in ff2[achem][elem]:
+                if myinter["@type"] == args.interaction:
+                    ff2inter = myinter
+                    break
+    if not ff2inter:
+        sys.exit(f"Cannot find {args.inter} in {args.ff2}")
+    # Now look up the same in ff1 and replace it
+    for elem in ff1[achem]:
+        if elem == inter:
+            for i in range(len(ff1[achem][elem])):
+                if ff1[achem][elem][i]["@type"] == args.interaction:
+                    ff1[achem][elem][i] = ff2inter
+                    break
+    # Finally save the file
+    with open(args.outfile, "w") as fd:
+        fd.write(xmltodict.unparse(ff1, pretty=True, indent=2))
+    print(f"Please check {args.outfile} carefully")
+
+
+    
