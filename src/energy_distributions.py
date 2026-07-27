@@ -2,30 +2,74 @@
 
 import argparse, json, math, os, sys, xmltodict
 import matplotlib.pyplot as plt
+import matplotlib.contour as contour
 import numpy as np
 
-debug       = False
-fragments   = "fragments"
-experiments = 'experiments'
-atoms       = "atoms"
+debug         = False
+fragments     = "fragments"
+experiments   = 'experiments'
+atoms         = "atoms"
+allcomponents = [ "COULOMB", "INDUCTION", "EXCHANGE", "DISPERSION", "EPOT" ]
 
 def parseArguments():
     desc = '''This script will read a json file produced by ACT train_ff.
 It will then produce one or more violin plots showing the energy deviation
-from the QM reference in multiple energy bins.
+from the QM reference in multiple energy bins. If, additionally, a molprop file
+corresponding to the json file is passed, the script will compute distances between
+monomers in each dimer,and plot the energy deviation as a function of distance.
+The violins can be colored by the root mean square deviation from QM if the color
+option is selected. Finally, the resulting file can be saved to a png or pdf file.
 '''
     parser = argparse.ArgumentParser(description=desc)
  
     parser.add_argument("-f", "--infile", help="The json input file", type=str, default=None)
     parser.add_argument("-mp", "--molprop", help="Molprop file to extract dimer distances corresponding to the energies in the json file.", type=str, default=None)
-    defout = "energy"
-    parser.add_argument("-o", "--outfile", help="Output file. The extension will be removed and the name of the compound appended. Default "+defout, type=str, default=defout)
+    parser.add_argument("-o", "--outfile", help="Optional output file. The extension will be removed and the name of the compound appended.", type=str)
+    parser.add_argument("-noshow", "--noshow", help="Do not show a plot", action="store_true")
     parser.add_argument("-mol", "--molecule", help="Molecule or dimer, default is all", type=str, default=None)
+    parser.add_argument("-col", "--color", help="Color violins by RMSD", action="store_true")
+    maxrmsd = 20
+    parser.add_argument("-rmsd", "--rmsd", help="Max energy RMSD (kJ/mol) in a violin, for coloring. Default "+str(maxrmsd), type=float, default=maxrmsd)
     defwidth = 5
     parser.add_argument("-bw", "--binwidth", help="Width of histogram bins, kJ/mol for energies, Angstrom for distances, default "+str(defwidth), type=float, default=defwidth)
-    defcmp = "EPOT"
-    parser.add_argument("-cmp", "--component", help="Energy component to plot, default "+defcmp, type=str, default=defcmp)
+    parser.add_argument("-cmp", "--components", nargs="+", help="Energy component(s) to plot, by default plot four components and the total in one columm. ", type=str, default=None)
     return parser.parse_args()
+
+def get_one_molprop(mydoc:dict)->dict:
+    molprop = {}
+    exp     = "experiment"
+    for k in mydoc.keys():
+        if fragments == k:
+            molprop[fragments] = []
+            for ff in mydoc[k]:
+                molprop[fragments].append(mydoc[k][ff])
+        if exp == k:
+            myexps = mydoc[k]
+            if isinstance(myexps, dict):
+                myexps = [ myexps ]
+            myexperiments = {}
+            for me in myexps:
+                if debug:
+                    print("me: {}".format(me))
+                myexperiment = {}
+                myatoms = []
+                for n in me:
+                    if debug:
+                        print("We have {}".format(n))
+                    if n == "atom":
+                        for a in me[n]:
+                            if debug:
+                                print("a {}".format(a))
+                            newat = { "@atomid": a["@atomid"], "@name": a["@name"] }
+                            for xyz in [ 'x', 'y', 'z' ]:
+                                newat[xyz] = float(a[xyz])
+                            myatoms.append(newat)
+                    else:
+                        continue
+                myexperiment[atoms] = myatoms
+                myexperiments[me['@datafile']] = myexperiment
+            molprop[experiments] = myexperiments
+    return molprop
 
 def get_coordinates(xmlfn:str)->dict:
     # Read molprop file
@@ -36,47 +80,56 @@ def get_coordinates(xmlfn:str)->dict:
     if not mols in doc:
         sys.exit("No %s in %s" % ( mols, infile ))
     mol = "molecule"
-    nmols = len(doc[mols][mol])
-    print("Number of molecules in molprop file %d" % nmols)
-    exp       = "experiment"
     molprops = {}
-    for m in range(nmols):
-        molprop = {}
-        for k in doc[mols][mol][m].keys():
-            if fragments == k:
-                molprop[fragments] = []
-                for ff in doc[mols][mol][m][k]:
-                    molprop[fragments].append(doc[mols][mol][m][k][ff])
-            if exp == k:
-                myexps = doc[mols][mol][m][k]
-                if isinstance(myexps, dict):
-                    myexps = [ myexps ]
-                myexperiments = {}
-                for me in myexps:
-                    if debug:
-                        print("me: {}".format(me))
-                    myexperiment = {}
-                    myatoms = []
-                    for n in me:
-                        if debug:
-                            print("We have {}".format(n))
-                        if n == "atom":
-                            for a in me[n]:
-                                if debug:
-                                    print("a {}".format(a))
-                                newat = { "@atomid": a["@atomid"], "@name": a["@name"] }
-                                for xyz in [ 'x', 'y', 'z' ]:
-                                    newat[xyz] = float(a[xyz])
-                                myatoms.append(newat)
-                        else:
-                            continue
-                    myexperiment[atoms] = myatoms
-                    myexperiments[me['@datafile']] = myexperiment
-                molprop[experiments] = myexperiments
-        molprops[doc[mols][mol][m]['@molname']] = molprop
+    if isinstance(doc[mols][mol], list):
+        for m in range(len(doc[mols][mol])):
+            molprops[doc[mols][mol][m]['@molname']] = get_one_molprop(doc[mols][mol][m])
+    else:
+        molprops[doc[mols][mol]['@molname']] = get_one_molprop(doc[mols][mol])
     return molprops
+
+def do_plot(components:list, msds:dict, emin:float, molname:str, xlabel:str, args):
+    # Now plot it
+    fig, axs =  plt.subplots(nrows=len(components), ncols=1, figsize=(10, 3*len(components)))
+    for c in range(len(components)):
+        comp      = components[c] 
+        msd_np    = []
+        xticks    = []
+        facecolor = []
+        for i in range(len(msds[comp])):
+            if msds[comp][i]:
+                mynparr = np.array(msds[comp][i])
+                msd_np.append(mynparr)
+                rmsd = np.sqrt(np.sum(np.square(mynparr)))
+                red  = int(255.999*min(1, (rmsd/args.rmsd)))
+                blue = 255-red
+                rgb  = ("#%02x00%02x" % ( red, blue ) )  
+                facecolor.append( (rgb, 0.5) )
+                if args.binwidth < 1:
+                    xticks.append("%.2f" % (emin+(i)*args.binwidth) )
+                else:
+                    xticks.append("%.0f" % (emin+(i)*args.binwidth) )
+        if args.color:
+            if debug:
+                print(facecolor)
+            vpener   = axs[c].violinplot(msd_np, facecolor=facecolor,
+                                         showmeans=False, showmedians=True)
+        else:
+            vpener   = axs[c].violinplot(msd_np, showmeans=False, showmedians=True)
+        axs[c].yaxis.grid(True)
+        axs[c].set_xticks([y for y in range(len(msd_np))], labels=xticks)
+        if c == len(components) - 1:
+            axs[c].set_xlabel(xlabel)
+        axs[c].set_ylabel(f'{comp} (ACT-QM)')
+        if c == 0:
+            axs[c].set_title(molname)
+            
+    if outfile:
+        plt.savefig(outfile, bbox_inches='tight')
+    if not args.noshow:
+        plt.show()
     
-def make_energy_bin(mol:dict, outfile:str, binwidth:float, component:str):
+def make_energy_bin(mol:dict, outfile:str, args):
     # First determine the minimum and maximum energy
     emin = None
     emax = None
@@ -86,35 +139,28 @@ def make_energy_bin(mol:dict, outfile:str, binwidth:float, component:str):
             emin = epot
         if not emax or epot > emax:
             emax = epot
+    # What components do we want?
+    components = args.components
+    if not components:
+        components = allcomponents
     # Then make the histogram
-    nbins = 1+int((emax-emin)/binwidth)
-    msd   = [None]*nbins
+    nbins = 1+int((emax-emin)/args.binwidth)
+    msds  = {}
+    for c in components:
+        msds[c]   = [None]*nbins
     # and fill it
     for calc in mol["interaction_energies"]:
         epot  = float(mol["interaction_energies"][calc]["EPOT"]["QM"])
-        index = int((epot-emin)/binwidth)
-        if component in mol["interaction_energies"][calc]:
-            qm  = float(mol["interaction_energies"][calc][component]["QM"])
-            act = float(mol["interaction_energies"][calc][component]["ACT"])
-            if not msd[index]:
-                msd[index] = []
-            msd[index].append(act - qm)
-    # Now plot it
-    fig, axs =  plt.subplots(nrows=1, ncols=1, figsize=(9, 4))
-    msd_np   = []
-    xticks   = []
-    for i in range(nbins):
-        if msd[i]:
-            msd_np.append(np.array(msd[i]))
-            xticks.append("%.0f" % (emin+(i)*binwidth) )
-    
-    vpener   = axs.violinplot(msd_np, showmeans=False, showmedians=True)
-    axs.yaxis.grid(True)
-    axs.set_xticks([y for y in range(len(msd_np))], labels=xticks)
-    axs.set_xlabel(f'{component} (kJ/mol)')
-    axs.set_ylabel(f'Residual (ACT-QM)')
-    axs.set_title(mol["name"])
-    plt.show()
+        index = int((epot-emin)/args.binwidth)
+        for comp in components:
+            if comp in mol["interaction_energies"][calc]:
+                qm  = float(mol["interaction_energies"][calc][comp]["QM"])
+                act = float(mol["interaction_energies"][calc][comp]["ACT"])
+                if not msds[comp][index]:
+                    msds[comp][index] = []
+                msds[comp][index].append(act - qm)
+    do_plot(components, msds, emin, mol["name"],
+            'SAPT EPOT (Total Interaction, kJ/mol)', args)
 
 def compute_dist(atoms: list, frags:list):
     dmin = 1e8
@@ -130,7 +176,7 @@ def compute_dist(atoms: list, frags:list):
                 dmin = d1
     return dmin
 
-def make_dist_bin(mol:dict, outfile:str, binwidth:float, component:str, molprop):
+def make_dist_bin(mol:dict, outfile:str, molprop, args):
     # Zero, start with check
     if not mol['name'] in molprop:
         print("Molecule/dimer %s not present in the molprop file" % mol['name'])
@@ -153,35 +199,44 @@ def make_dist_bin(mol:dict, outfile:str, binwidth:float, component:str, molprop)
         dmax = max(dmax, mydist)
 
     # Then make the histogram
-    nbins = 1+int((dmax-dmin)/binwidth)
-    msd   = [None]*nbins
+    components = args.components
+    if not components:
+        components = allcomponents
+    nbins = 1+int((dmax-dmin)/args.binwidth)
+    msds  = {}
+    for c in components:
+        msds[c]   = [None]*nbins
     # and fill it
     for calc in mol["interaction_energies"]:
         epot  = float(mol["interaction_energies"][calc]["EPOT"]["QM"])
         if calc in dist_data:
-            index = int((dist_data[calc]-dmin)/binwidth)
-            if component in mol["interaction_energies"][calc]:
-                qm  = float(mol["interaction_energies"][calc][component]["QM"])
-                act = float(mol["interaction_energies"][calc][component]["ACT"])
-                if not msd[index]:
-                    msd[index] = []
-                msd[index].append(act - qm)
+            index = int((dist_data[calc]-dmin)/args.binwidth)
+            for comp in components:
+                if comp in mol["interaction_energies"][calc]:
+                    qm  = float(mol["interaction_energies"][calc][comp]["QM"])
+                    act = float(mol["interaction_energies"][calc][comp]["ACT"])
+                    if not msds[comp][index]:
+                        msds[comp][index] = []
+                    msds[comp][index].append(act - qm)
+    do_plot(components, msds, dmin, mol["name"],
+            'Distance ($\\mathrm{\\AA}$)', args)
     # Now plot it
-    fig, axs =  plt.subplots(nrows=1, ncols=1, figsize=(9, 4))
-    msd_np   = []
-    xticks   = []
-    for i in range(nbins):
-        if msd[i]:
-            msd_np.append(np.array(msd[i]))
-            xticks.append("%.1f" % (dmin+(i)*binwidth) )
+    if False:
+        fig, axs =  plt.subplots(nrows=len(components), ncols=1, figsize=(10, 3*len(components)))
+        msd_np   = []
+        xticks   = []
+        for i in range(nbins):
+            if msd[i]:
+                msd_np.append(np.array(msd[i]))
+                xticks.append("%.1f" % (dmin+(i)*binwidth) )
     
-    vpener   = axs.violinplot(msd_np, showmeans=False, showmedians=True)
-    axs.yaxis.grid(True)
-    axs.set_xticks([y for y in range(len(msd_np))], labels=xticks)
-    axs.set_xlabel('Distance ($\\mathrm{\\AA}$)')
-    axs.set_ylabel(f'Residual {component} (ACT-QM)')
-    axs.set_title(mol["name"])
-    plt.show()
+        vpener   = axs.violinplot(msd_np, showmeans=False, showmedians=True)
+        axs.yaxis.grid(True)
+        axs.set_xticks([y for y in range(len(msd_np))], labels=xticks)
+        axs.set_xlabel('Distance ($\\mathrm{\\AA}$)')
+        axs.set_ylabel(f'Residual {component} (ACT-QM)')
+        axs.set_title(mol["name"])
+        plt.show()
         
 if __name__ == "__main__":
     args  = parseArguments()
@@ -198,9 +253,17 @@ if __name__ == "__main__":
         molprop = get_coordinates(args.molprop)
     for mol in train_data["train_ff"]["molecules"]:
         if not args.molecule or train_data["train_ff"]["molecules"][mol]["name"] == args.molecule:
+            outfile = None
+            if args.outfile:
+                ooo     = os.path.splitext(args.outfile)
+                outfile = ooo[0] + "-" + train_data["train_ff"]["molecules"][mol]["name"]
+                if len(ooo) > 1:
+                    outfile += ooo[1]
+                else:
+                    outfile += ".png"
             if molprop:
                 make_dist_bin(train_data["train_ff"]["molecules"][mol],
-                              args.outfile, args.binwidth, args.component, molprop)
+                              outfile, molprop, args)
             else:
                 make_energy_bin(train_data["train_ff"]["molecules"][mol],
-                                args.outfile, args.binwidth, args.component)
+                                outfile, args)
