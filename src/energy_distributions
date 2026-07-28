@@ -92,6 +92,8 @@ def get_coordinates(xmlfn:str)->dict:
 def do_plot(components:list, msds:dict, emin:float, molname:str, xlabel:str, args, outfile=None):
     # Now plot it
     fig, axs =  plt.subplots(nrows=len(components), ncols=1, figsize=(10, 3*len(components)))
+    if len(components) == 1:
+        axs = [ axs ]
     for c in range(len(components)):
         comp      = components[c] 
         msd_np    = []
@@ -101,7 +103,10 @@ def do_plot(components:list, msds:dict, emin:float, molname:str, xlabel:str, arg
             if msds[comp][i]:
                 mynparr = np.array(msds[comp][i])
                 msd_np.append(mynparr)
-                rmsd  = np.sqrt(np.sum(np.square(mynparr)))
+                Nrmsd = len(msds[comp][i])
+                rmsd  = 0
+                if Nrmsd > 0:
+                    rmsd = np.sqrt(np.sum(np.square(mynparr))/Nrmsd)
                 red   = int(255.999*min(1, (rmsd/args.rmsd)))
                 green = 255-red
                 blue  = 255
