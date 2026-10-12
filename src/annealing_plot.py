@@ -87,7 +87,8 @@ if __name__ == "__main__":
     maxiter = 20
     xvgs = [ Tlocal(0.3, 0.8, maxgen, maxiter, 1.0),
              Tmix(0.2, 0.7, maxgen, maxiter, 1.0),
-             Tmix2(0.2, 0.7, maxgen, maxiter, 1.0),
+             Tmix2(0.1, 0.9, maxgen, maxiter, 1.0),
+#             Tmix2(0.0, 1.0, maxgen, maxiter, 1.0),
              Tglobal(0.3, 0.8, maxgen, maxiter, 1.0) ]
     plotxvg.plot(xvgs, datasetlegends=["Local", "Mix", "Mix2", "Global"],marker=[None,None,None,None],ls=["solid","dashed","dotted","dashdot"],legend_y=0.4)
     
