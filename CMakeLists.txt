@@ -14,6 +14,9 @@ cmake_minimum_required(VERSION 3.24)
 
 project(ACT-utilities VERSION 1.9 LANGUAGES NONE)
 
+# The Python first in the PATH, for instance that of a conda environment,
+# rather than the framework Python of macOS (Xcode), which CMake prefers
+set(Python3_FIND_FRAMEWORK LAST)
 find_package(Python3 REQUIRED COMPONENTS Interpreter)
 if(NOT CMAKE_INSTALL_PYTHON_LIBDIR)
     set(CMAKE_INSTALL_PYTHON_LIBDIR
