@@ -6,6 +6,10 @@ pre- and post-processing, converters to molprop files, the interface to
 OpenMM, and analysis tools. ACT requires them. Until ACT 1.9b they were in
 `src/act/python` of the ACT repository, see `src/README.md` for the list.
 
+The data files that these tools use, and that `alexandria` reads as well,
+such as `alexandria.json`, `atom_bond.xml` and `atomprops.csv`, are in
+`share` and are installed in `<prefix>/share/act`.
+
 ## Installation
 
 With conda, together with ACT:
@@ -22,9 +26,10 @@ installed, or into the conda environment used for ACT:
     cmake -S . -B build -DCMAKE_INSTALL_PREFIX=<prefix>
     cmake --install build
 
-The modules go to `<prefix>/lib/pythonX.Y/site-packages/act` and the scripts
-to `<prefix>/bin`. A Python that uses this site-packages, such as that of a
-conda environment, finds the modules through the file `act.pth`; otherwise
+The modules go to `<prefix>/lib/pythonX.Y/site-packages/act`, the scripts
+to `<prefix>/bin` and the data files to `<prefix>/share/act`. A Python that
+uses this site-packages, such as that of a conda environment, finds the
+modules through the file `act.pth`; otherwise
 `source <prefix>/bin/ACTRC` of ACT adds them to `PYTHONPATH`.
 
 ## Tests

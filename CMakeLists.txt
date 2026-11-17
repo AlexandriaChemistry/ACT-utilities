@@ -7,13 +7,17 @@
 #   cmake --install build
 #
 # The modules go to <prefix>/lib/pythonX.Y/site-packages/act, the scripts to
-# <prefix>/bin. The file act.pth makes a Python with this site-packages find
-# the modules, otherwise the file ACTRC of ACT adds them to PYTHONPATH.
+# <prefix>/bin and the data files to <prefix>/share/act. The file act.pth
+# makes a Python with this site-packages find the modules, otherwise the
+# file ACTRC of ACT adds them to PYTHONPATH.
 #
 cmake_minimum_required(VERSION 3.24)
 
 project(ACT-utilities VERSION 1.9 LANGUAGES NONE)
 
+# The Python first in the PATH, for instance that of a conda environment,
+# rather than the framework Python of macOS (Xcode), which CMake prefers
+set(Python3_FIND_FRAMEWORK LAST)
 find_package(Python3 REQUIRED COMPONENTS Interpreter)
 if(NOT CMAKE_INSTALL_PYTHON_LIBDIR)
     set(CMAKE_INSTALL_PYTHON_LIBDIR
@@ -23,3 +27,4 @@ endif()
 include(CTest)
 
 add_subdirectory(src)
+add_subdirectory(share)
