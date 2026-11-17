@@ -1,0 +1,67 @@
+name: ACT-utilities tests
+run-name: ${{ github.actor }} tests ACT-utilities
+on:
+  push:
+  pull_request:
+jobs:
+  tests:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        # The oldest and a recent Python that the conda package supports
+        python-version: ["3.10", "3.13"]
+    env:
+      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
+    steps:
+      - name: Check out ACT-utilities
+        uses: actions/checkout@v6
+      - name: Check out the data files of ACT
+        uses: actions/checkout@v6
+        with:
+          repository: AlexandriaChemistry/ACT
+          path: ACT
+          sparse-checkout: share
+      - uses: conda-incubator/setup-miniconda@v4
+        with:
+          auto-update-conda: true
+          channels: conda-forge
+          conda-remove-defaults: "true"
+          python-version: ${{ matrix.python-version }}
+      - name: Install the dependencies
+        shell: bash -el {0}
+        run: |
+          conda install cmake make numpy matplotlib-base rdkit pyyaml xmltodict
+          conda list
+      - name: Install ACT-utilities
+        shell: bash -el {0}
+        run: |
+          cmake -S . -B build -DCMAKE_INSTALL_PREFIX=${RUNNER_TEMP}/act-utilities
+          cmake --build build
+          cmake --install build
+      - name: Check the installed modules and scripts
+        shell: bash -el {0}
+        run: |
+          prefix=${RUNNER_TEMP}/act-utilities
+          pyver=$(python -c 'import sys; print("%d.%d" % sys.version_info[:2])')
+          PYTHONPATH=${prefix}/lib/python${pyver}/site-packages/act \
+              python -c "import actutils, molprops, mol_json, molutils, elements"
+          ${prefix}/bin/coords2molprop -h > /dev/null
+      - name: Run the tests
+        shell: bash -el {0}
+        env:
+          # The scripts need the data files of ACT
+          ACTDATA: ${{ github.workspace }}/ACT/share
+        run: |
+          set -o pipefail
+          cd build
+          ctest --output-on-failure | tee ctest.log
+          # The tests of coords2molprop must run, not be skipped. The tests
+          # of the OpenMM interface are skipped, since they need alexandria
+          # and OpenMM; the CI of ACT runs them.
+          cd ../src/tests
+          python -m unittest -v test_coords2molprop 2>&1 | tee coords2molprop.log
+          if grep -q "skipped" coords2molprop.log; then
+            echo "::error::The tests of coords2molprop were skipped"
+            exit 1
+          fi
