@@ -37,59 +37,57 @@ configure_file(coords2molprop coords2molprop @ONLY)
 configure_file(donchev2molprop donchev2molprop @ONLY)
 configure_file(ncia2molprop ncia2molprop @ONLY)
 
-# The modules and scripts are installed unless ACT_INSTALL_PYTHON is OFF, for
-# instance for the conda package alexandria, which leaves them to the package
-# alexandria-python. The file act.pth adds the directory of the modules to the
-# path of a Python that has this site-packages, such as that of a conda
-# environment, also when its Python version differs from the one found here.
-if(ACT_INSTALL_PYTHON)
-    # Library scripts
-    install(FILES act.py DESTINATION ${ACT_PYTHON_LIB_PATH})
-    install(FILES act_gct.py DESTINATION ${ACT_PYTHON_LIB_PATH})
-    install(FILES act_openmm.py DESTINATION ${ACT_PYTHON_LIB_PATH})
-    install(FILES actutils.py DESTINATION ${ACT_PYTHON_LIB_PATH})
-    install(FILES atomic_heat_of_formation.py DESTINATION ${ACT_PYTHON_LIB_PATH})
-    install(FILES dofit.py DESTINATION ${ACT_PYTHON_LIB_PATH})
-    install(FILES elements.py DESTINATION ${ACT_PYTHON_LIB_PATH})
-    install(FILES get_csv_rows.py DESTINATION ${ACT_PYTHON_LIB_PATH})
-    install(FILES get_mol_dict.py DESTINATION ${ACT_PYTHON_LIB_PATH})
-    install(FILES jacobi.py DESTINATION ${ACT_PYTHON_LIB_PATH})
-    install(FILES mol_json.py DESTINATION ${ACT_PYTHON_LIB_PATH})
-    install(FILES molprops.py DESTINATION ${ACT_PYTHON_LIB_PATH})
-    install(FILES molutils.py DESTINATION ${ACT_PYTHON_LIB_PATH})
-    install(FILES ncia_reader_from_xyz.py DESTINATION ${ACT_PYTHON_LIB_PATH})
-    install(FILES read_gaussian_log.py DESTINATION ${ACT_PYTHON_LIB_PATH})
-    install(FILES ${CMAKE_CURRENT_BINARY_DIR}/mol_csv_api.py DESTINATION ${ACT_PYTHON_LIB_PATH})
+# The file act.pth adds the directory of the modules to the path of a Python
+# that has this site-packages, such as that of a conda environment, also when
+# its Python version differs from the one found here.
+# Library scripts
+install(FILES act.py DESTINATION ${ACT_PYTHON_LIB_PATH})
+install(FILES act_gct.py DESTINATION ${ACT_PYTHON_LIB_PATH})
+install(FILES act_openmm.py DESTINATION ${ACT_PYTHON_LIB_PATH})
+install(FILES actutils.py DESTINATION ${ACT_PYTHON_LIB_PATH})
+install(FILES atomic_heat_of_formation.py DESTINATION ${ACT_PYTHON_LIB_PATH})
+install(FILES dofit.py DESTINATION ${ACT_PYTHON_LIB_PATH})
+install(FILES elements.py DESTINATION ${ACT_PYTHON_LIB_PATH})
+install(FILES get_csv_rows.py DESTINATION ${ACT_PYTHON_LIB_PATH})
+install(FILES get_mol_dict.py DESTINATION ${ACT_PYTHON_LIB_PATH})
+install(FILES jacobi.py DESTINATION ${ACT_PYTHON_LIB_PATH})
+install(FILES mol_json.py DESTINATION ${ACT_PYTHON_LIB_PATH})
+install(FILES molprops.py DESTINATION ${ACT_PYTHON_LIB_PATH})
+install(FILES molutils.py DESTINATION ${ACT_PYTHON_LIB_PATH})
+install(FILES ncia_reader_from_xyz.py DESTINATION ${ACT_PYTHON_LIB_PATH})
+install(FILES read_gaussian_log.py DESTINATION ${ACT_PYTHON_LIB_PATH})
+install(FILES ${CMAKE_CURRENT_BINARY_DIR}/mol_csv_api.py DESTINATION ${ACT_PYTHON_LIB_PATH})
 
-    # Executable scripts
-    install(PROGRAMS ${CMAKE_CURRENT_BINARY_DIR}/gauss2molprop DESTINATION bin)
-    install(PROGRAMS ${CMAKE_CURRENT_BINARY_DIR}/generate_mp DESTINATION bin)
-    install(PROGRAMS ${CMAKE_CURRENT_BINARY_DIR}/molselect DESTINATION bin)
-    install(PROGRAMS ${CMAKE_CURRENT_BINARY_DIR}/reshuffle_selection DESTINATION bin)
-    install(PROGRAMS ${CMAKE_CURRENT_BINARY_DIR}/coords2molprop DESTINATION bin)
-    install(PROGRAMS dimer_scan DESTINATION bin)
-    install(PROGRAMS plot_convergence DESTINATION bin)
-    install(PROGRAMS view_fitness DESTINATION bin)
-    install(PROGRAMS ${CMAKE_CURRENT_BINARY_DIR}/donchev2molprop DESTINATION bin)
-    install(PROGRAMS ${CMAKE_CURRENT_BINARY_DIR}/ncia2molprop DESTINATION bin)
-    install(PROGRAMS ${CMAKE_CURRENT_BINARY_DIR}/actgui DESTINATION bin)
-    file(WRITE ${CMAKE_CURRENT_BINARY_DIR}/act.pth "act\n")
-    install(FILES ${CMAKE_CURRENT_BINARY_DIR}/act.pth
-            DESTINATION ${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_PYTHON_LIBDIR})
-endif()
+# Executable scripts
+install(PROGRAMS ${CMAKE_CURRENT_BINARY_DIR}/gauss2molprop DESTINATION bin)
+install(PROGRAMS ${CMAKE_CURRENT_BINARY_DIR}/generate_mp DESTINATION bin)
+install(PROGRAMS ${CMAKE_CURRENT_BINARY_DIR}/molselect DESTINATION bin)
+install(PROGRAMS ${CMAKE_CURRENT_BINARY_DIR}/reshuffle_selection DESTINATION bin)
+install(PROGRAMS ${CMAKE_CURRENT_BINARY_DIR}/coords2molprop DESTINATION bin)
+install(PROGRAMS dimer_scan DESTINATION bin)
+install(PROGRAMS plot_convergence DESTINATION bin)
+install(PROGRAMS view_fitness DESTINATION bin)
+install(PROGRAMS ${CMAKE_CURRENT_BINARY_DIR}/donchev2molprop DESTINATION bin)
+install(PROGRAMS ${CMAKE_CURRENT_BINARY_DIR}/ncia2molprop DESTINATION bin)
+install(PROGRAMS ${CMAKE_CURRENT_BINARY_DIR}/actgui DESTINATION bin)
+file(WRITE ${CMAKE_CURRENT_BINARY_DIR}/act.pth "act\n")
+install(FILES ${CMAKE_CURRENT_BINARY_DIR}/act.pth
+        DESTINATION ${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_PYTHON_LIBDIR})
 
-# Tests of the python scripts, they are skipped if OpenMM or RDKit cannot be imported
-if (BUILD_TESTING AND GMX_BUILD_UNITTESTS)
-    find_package(Python3 COMPONENTS Interpreter QUIET)
-    if (Python3_Interpreter_FOUND)
-        add_test(NAME ActOpenMMTest
-                 COMMAND ${Python3_EXECUTABLE} -m unittest -v test_act_openmm
-                 WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/tests)
-        set_tests_properties(ActOpenMMTest PROPERTIES
-                             ENVIRONMENT "ACT_ALEXANDRIA=$<TARGET_FILE:alexandria>")
-        # Skipped if RDKit cannot be imported
-        add_test(NAME Coords2MolpropTest
-                 COMMAND ${Python3_EXECUTABLE} -m unittest -v test_coords2molprop
-                 WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/tests)
-    endif()
+# Utilities that need no configuration
+install(PROGRAMS annealing_plot.py calc_tip4p_dummy.py energy_distributions replace_interactions
+        DESTINATION bin)
+
+
+# Tests of the python scripts. The test of the OpenMM interface needs
+# alexandria, from the PATH or the environment variable ACT_ALEXANDRIA, and
+# OpenMM, and is skipped without them; the test of coords2molprop is skipped
+# if RDKit cannot be imported.
+if(BUILD_TESTING)
+    add_test(NAME ActOpenMMTest
+             COMMAND ${Python3_EXECUTABLE} -m unittest -v test_act_openmm
+             WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/tests)
+    add_test(NAME Coords2MolpropTest
+             COMMAND ${Python3_EXECUTABLE} -m unittest -v test_coords2molprop
+             WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/tests)
 endif()
