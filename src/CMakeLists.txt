@@ -80,8 +80,9 @@ install(PROGRAMS annealing_plot.py calc_tip4p_dummy.py energy_distributions repl
 
 
 # Tests of the python scripts. The test of the OpenMM interface needs
-# alexandria, from the PATH or the environment variable ACT_ALEXANDRIA, and
-# OpenMM, and is skipped without them; the test of coords2molprop is skipped
+# alexandria, from the PATH or the environment variable ACT_ALEXANDRIA,
+# OpenMM, and the test data of ACT in the environment variable ACT_TESTDATA,
+# and is skipped without them; the test of coords2molprop is skipped
 # if RDKit cannot be imported.
 if(BUILD_TESTING)
     add_test(NAME ActOpenMMTest

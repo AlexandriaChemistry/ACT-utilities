@@ -27,8 +27,10 @@
 
 """
 Tests of the OpenMM interface in act_openmm.py. They are skipped if OpenMM
-cannot be imported or the alexandria program cannot be found, either in
-the PATH or in the environment variable ACT_ALEXANDRIA, unless the
+cannot be imported, the alexandria program cannot be found, either in
+the PATH or in the environment variable ACT_ALEXANDRIA, or the test data of
+ACT cannot be found, in the directory src/act/testdata of the ACT source
+code given by the environment variable ACT_TESTDATA, unless the
 environment variable ACT_REQUIRE_OPENMM is set, as in continuous
 integration, then they fail.
 
@@ -52,14 +54,18 @@ except ImportError:
     haveOpenMM = False
 
 testDir    = os.path.dirname(os.path.abspath(__file__))
-# The input files of the tests, see src/act/testdata/README.md
-testData   = os.path.join(testDir, "..", "..", "testdata")
+# The input files of the tests are in the test data of ACT, in
+# src/act/testdata of its source code, see the README.md there
+testData   = os.environ.get("ACT_TESTDATA", "")
+haveData   = os.path.exists(os.path.join(testData, "forcefields", "SPCE.xml"))
 sys.path.insert(0, os.path.dirname(testDir))
 alexandria = os.environ.get("ACT_ALEXANDRIA", shutil.which("alexandria"))
-available  = haveOpenMM and alexandria is not None
+available  = haveOpenMM and alexandria is not None and haveData
 if os.environ.get("ACT_REQUIRE_OPENMM") and not available:
-    raise RuntimeError("OpenMM (%s) and alexandria (%s) are required by ACT_REQUIRE_OPENMM" %
-                       ( "found" if haveOpenMM else "not found", alexandria ))
+    raise RuntimeError("OpenMM (%s), alexandria (%s) and the test data of ACT in ACT_TESTDATA (%s) "
+                       "are required by ACT_REQUIRE_OPENMM" %
+                       ( "found" if haveOpenMM else "not found", alexandria,
+                         testData if haveData else "not found" ))
 
 # Simulation parameters, NONBONDED is replaced by the settings of a test
 cutoff      = 0.6
@@ -163,7 +169,7 @@ def referenceTail(potential:str, pdbFile:str)->float:
         energy[correction] = state.getPotentialEnergy().value_in_unit(openmm.unit.kilojoule_per_mole)
     return energy[True] - energy[False]
 
-@unittest.skipUnless(available, "OpenMM or alexandria not available")
+@unittest.skipUnless(available, "OpenMM, alexandria or the test data of ACT (ACT_TESTDATA) not available")
 class LongRangeCorrectionTest(unittest.TestCase):
     """ The long range correction of the van der Waals potential """
 
@@ -312,7 +318,7 @@ class LongRangeCorrectionTest(unittest.TestCase):
         self.assertFalse(vdw["longRange"])
         self.assertTrue("WARNING: useLongRangeCorrection" in log, "No warning in the log file")
 
-@unittest.skipUnless(available, "OpenMM or alexandria not available")
+@unittest.skipUnless(available, "OpenMM, alexandria or the test data of ACT (ACT_TESTDATA) not available")
 class ResidueBondsTest(unittest.TestCase):
     """
     OpenMM finds the bonds in a PDB file without CONECT records from the
