@@ -1,0 +1,62 @@
+# Recipe for the conda package act-utilities, built with rattler-build:
+#
+#   rattler-build build --recipe conda/recipe.yaml --channel conda-forge
+#
+# The source is the directory or archive in the environment variable
+# ACT_UTILITIES_SOURCE, by default this repository. The package alexandria of
+# ACT depends on this package.
+
+context:
+  version: "1.9b"
+
+package:
+  name: act-utilities
+  version: ${{ version }}
+
+source:
+  path: ${{ env.get("ACT_UTILITIES_SOURCE", default="..") }}
+
+build:
+  number: 0
+  noarch: python
+  script:
+    - cmake -S . -B build -DCMAKE_INSTALL_PREFIX=$PREFIX -DBUILD_TESTING=OFF
+    - cmake --install build
+
+requirements:
+  build:
+    - cmake >=3.24
+    - make
+  host:
+    - python >=3.10
+  run:
+    - python >=3.10
+    - numpy
+    - matplotlib-base
+    - rdkit
+    - pyyaml
+    - xmltodict
+
+tests:
+  - python:
+      imports:
+        - actutils
+        - molprops
+        - mol_json
+      pip_check: false
+  - script:
+      - coords2molprop -h
+      - test -f $PREFIX/bin/gauss2molprop
+
+about:
+  homepage: https://github.com/AlexandriaChemistry/ACT-utilities
+  repository: https://github.com/AlexandriaChemistry/ACT-utilities
+  license: GPL-3.0-or-later
+  license_file: LICENSE
+  summary: Python modules and scripts of the Alexandria Chemistry Toolkit (ACT)
+
+extra:
+  recipe-maintainers:
+    - dspoel
+    - JulianKoengeter
+    - MansRosenbaum
