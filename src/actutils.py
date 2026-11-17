@@ -16,11 +16,14 @@ def alexandria_program() -> str:
     return "alexandria"
 
 def actdata() -> str:
-    """The directory with the data files of ACT: that in the environment
-    variable ACTDATA, if set, and otherwise share/act of the installation or
-    share of the source tree that this file is part of."""
+    """The directory with the data files of ACT-utilities: that in the
+    environment variable ACTDATA, if set and if it has them, and otherwise
+    share/act of the installation or share of the source tree that this
+    file is part of. ACTDATA may also point to the data files of ACT alone,
+    which are in share/act of ACT, possibly in another prefix."""
     actdata = "ACTDATA"
-    if actdata in os.environ and os.environ[actdata]:
+    if (actdata in os.environ and os.environ[actdata] and
+        os.path.exists(os.path.join(os.environ[actdata], "atom_bond.xml"))):
         return os.environ[actdata]
     folder = os.path.dirname(os.path.realpath(__file__))
     while True:

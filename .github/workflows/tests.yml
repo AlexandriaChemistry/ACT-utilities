@@ -16,12 +16,6 @@ jobs:
     steps:
       - name: Check out ACT-utilities
         uses: actions/checkout@v6
-      - name: Check out the data files of ACT
-        uses: actions/checkout@v6
-        with:
-          repository: AlexandriaChemistry/ACT
-          path: ACT
-          sparse-checkout: share
       - uses: conda-incubator/setup-miniconda@v4
         with:
           auto-update-conda: true
@@ -47,11 +41,13 @@ jobs:
           PYTHONPATH=${prefix}/lib/python${pyver}/site-packages/act \
               python -c "import actutils, molprops, mol_json, molutils, elements"
           ${prefix}/bin/coords2molprop -h > /dev/null
+          test -f ${prefix}/share/act/atom_bond.xml
+          test -f ${prefix}/share/act/atomtypes_gui.csv
+          # The installed modules find the installed data files
+          PYTHONPATH=${prefix}/lib/python${pyver}/site-packages/act \
+              python -c "import actutils; d = actutils.actdata(); print(d); assert d.startswith('${prefix}')"
       - name: Run the tests
         shell: bash -el {0}
-        env:
-          # The scripts need the data files of ACT
-          ACTDATA: ${{ github.workspace }}/ACT/share
         run: |
           set -o pipefail
           cd build

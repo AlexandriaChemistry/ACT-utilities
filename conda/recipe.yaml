@@ -47,6 +47,9 @@ tests:
   - script:
       - coords2molprop -h
       - test -f $PREFIX/bin/gauss2molprop
+      - test -f $PREFIX/share/act/atom_bond.xml
+      - test -f $PREFIX/share/act/atomtypes_gui.csv
+      - python -c "import actutils; assert actutils.actdata().endswith('share/act')"
 
 about:
   homepage: https://github.com/AlexandriaChemistry/ACT-utilities

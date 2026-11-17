@@ -7,8 +7,9 @@
 #   cmake --install build
 #
 # The modules go to <prefix>/lib/pythonX.Y/site-packages/act, the scripts to
-# <prefix>/bin. The file act.pth makes a Python with this site-packages find
-# the modules, otherwise the file ACTRC of ACT adds them to PYTHONPATH.
+# <prefix>/bin and the data files to <prefix>/share/act. The file act.pth
+# makes a Python with this site-packages find the modules, otherwise the
+# file ACTRC of ACT adds them to PYTHONPATH.
 #
 cmake_minimum_required(VERSION 3.24)
 
@@ -26,3 +27,4 @@ endif()
 include(CTest)
 
 add_subdirectory(src)
+add_subdirectory(share)
