@@ -37,8 +37,10 @@ modules through the file `act.pth`; otherwise
     cd build && ctest
 
 The test of the OpenMM interface needs `alexandria`, from the `PATH` or the
-environment variable `ACT_ALEXANDRIA`, and OpenMM; it is skipped without
-them, unless `ACT_REQUIRE_OPENMM` is set.
+environment variable `ACT_ALEXANDRIA`, OpenMM, and the test data of ACT,
+the directory `src/act/testdata` of its source code, in the environment
+variable `ACT_TESTDATA`. It is skipped without them, unless
+`ACT_REQUIRE_OPENMM` is set; the CI of ACT runs it.
 
 ## Conda package
 
