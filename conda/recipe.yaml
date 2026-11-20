@@ -17,7 +17,7 @@ source:
   path: ${{ env.get("ACT_UTILITIES_SOURCE", default="..") }}
 
 build:
-  number: 0
+  number: 1
   noarch: python
   script:
     - cmake -S . -B build -DCMAKE_INSTALL_PREFIX=$PREFIX -DBUILD_TESTING=OFF

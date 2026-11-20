@@ -55,3 +55,17 @@ variable `ACT_TESTDATA`. It is skipped without them, unless
 [rattler-build](https://rattler.build):
 
     rattler-build build --recipe conda/recipe.yaml --channel conda-forge
+
+The workflow `.github/workflows/conda.yml` does this for pull requests
+that change the recipe or what is installed. It uploads the package to the
+channel `alexandriachemistry` on anaconda.org for a tag `v` plus the
+version in the recipe, with the label `main`, and for a run by hand (Actions,
+Conda package, Run workflow, with Upload ticked) with the label that is
+given, `dev` by default:
+
+    conda install -c alexandriachemistry/label/dev -c conda-forge act-utilities
+
+A file that is on the channel is not replaced. For a new build of the same
+version, raise `build: number` in the recipe first; a new version starts
+again at 0. The package `alexandria` of ACT asks for the `act-utilities` of
+its own version.

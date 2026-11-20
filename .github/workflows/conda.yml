@@ -1,0 +1,92 @@
+name: Conda package
+run-name: ${{ github.actor }} builds the conda package act-utilities
+# Builds the noarch conda package act-utilities with the recipe in conda/.
+# Pull requests that change the recipe or what is installed only build and
+# test it. A tag v* uploads it to the channel alexandriachemistry on
+# anaconda.org with the label main, a run by hand with the label that is
+# given, dev by default. The upload needs the repository secret
+# ANACONDA_API_TOKEN.
+#
+# A file that is on the channel already is not replaced: the upload stops
+# with an error. Raise the build number in conda/recipe.yaml for a new build
+# of the same version.
+on:
+  push:
+    tags:
+      - "v*"
+  pull_request:
+    paths:
+      - "conda/**"
+      - "src/**"
+      - "share/**"
+      - "CMakeLists.txt"
+      - ".github/workflows/conda.yml"
+  workflow_dispatch:
+    inputs:
+      upload:
+        description: "Upload the package to anaconda.org"
+        type: boolean
+        default: false
+      label:
+        description: "Label of the uploaded package"
+        type: string
+        default: "dev"
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    env:
+      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
+      # Inside the workspace, since upload-artifact refuses paths with ..
+      CONDA_OUT: ${{ github.workspace }}/conda-out
+    steps:
+      - uses: actions/checkout@v6
+      - name: Check the version
+        run: |
+          recipe=$(sed -n 's/^  version: "\(.*\)"$/\1/p' conda/recipe.yaml)
+          echo "version in the recipe: ${recipe}"
+          if [ -z "${recipe}" ]; then
+            echo "::error::No version found in conda/recipe.yaml"
+            exit 1
+          fi
+          if [ "${GITHUB_REF_TYPE}" = "tag" ] && [ "${GITHUB_REF_NAME}" != "v${recipe}" ]; then
+            echo "::error::Tag ${GITHUB_REF_NAME} does not match version ${recipe} in conda/recipe.yaml"
+            exit 1
+          fi
+      - uses: conda-incubator/setup-miniconda@v4
+        with:
+          auto-update-conda: true
+          channels: conda-forge
+          conda-remove-defaults: "true"
+      - name: Install rattler-build and anaconda-client
+        shell: bash -el {0}
+        run: |
+          conda install rattler-build anaconda-client
+          rattler-build --version
+      - name: Build and test
+        shell: bash -el {0}
+        run: |
+          ACT_UTILITIES_SOURCE=${{ github.workspace }} \
+            rattler-build build --recipe conda/recipe.yaml --channel conda-forge \
+                                --output-dir ${CONDA_OUT}
+          ls -l ${CONDA_OUT}/noarch/*.conda
+      - name: Keep the package
+        uses: actions/upload-artifact@v7
+        with:
+          name: conda-noarch
+          path: ${{ env.CONDA_OUT }}/noarch/*.conda
+      - name: Upload to anaconda.org
+        if: startsWith(github.ref, 'refs/tags/v') || (github.event_name == 'workflow_dispatch' && inputs.upload)
+        shell: bash -el {0}
+        env:
+          ANACONDA_API_TOKEN: ${{ secrets.ANACONDA_API_TOKEN }}
+          LABEL: ${{ startsWith(github.ref, 'refs/tags/v') && 'main' || inputs.label }}
+        run: |
+          if [ -z "${ANACONDA_API_TOKEN}" ]; then
+            echo "::error::The repository secret ANACONDA_API_TOKEN is not set"
+            exit 1
+          fi
+          # Without --skip-existing: a file with the same name on the channel
+          # is an error, not a silent skip
+          anaconda upload --user alexandriachemistry --label "${LABEL}" \
+                   ${CONDA_OUT}/noarch/*.conda
