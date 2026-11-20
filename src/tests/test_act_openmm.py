@@ -373,6 +373,58 @@ class ResidueBondsTest(unittest.TestCase):
         self.assertEqual([ "MOH" ] + 4*[ "WTR" ],
                          self.check("ACS-pg1", [ "-resnames", "water=WTR methanol=MOH" ]))
 
+@unittest.skipUnless(available, "OpenMM, alexandria or the test data of ACT (ACT_TESTDATA) not available")
+class SingleMoleculeTest(unittest.TestCase):
+    """
+    One molecule in vacuum, without cut-off, with a polarizable force field
+    that has no exclusions (nexcl is 0): the files that the user interface
+    of ACT makes for OpenMM
+    """
+
+    def setUp(self):
+        self.workDir = tempfile.mkdtemp()
+
+    def tearDown(self):
+        shutil.rmtree(self.workDir, ignore_errors=True)
+
+    def test_short_simulation(self):
+        """ A few steps run, and the energies are written """
+        from act_openmm import ActOpenMMSim
+
+        xmlFile = os.path.join(self.workDir, "openmm.xml")
+        pdbFile = os.path.join(self.workDir, "conf.pdb")
+        result  = subprocess.run([ alexandria, "gentop", "-ff", os.path.join(testData, "forcefields", "ACS-pg1.xml"),
+                                   "-f", os.path.join(testData, "molecules", "acetone.sdf"),
+                                   "-openmm", xmlFile, "-c", pdbFile ],
+                                 cwd=self.workDir, capture_output=True, text=True)
+        self.assertEqual(0, result.returncode, result.stdout + result.stderr)
+        with open(xmlFile) as inf:
+            self.assertIn('<GlobalParameter name="nexcl" defaultValue="0"/>', inf.read())
+        nsteps  = 10
+        datFile = os.path.join(self.workDir, "simulation.dat")
+        with open(datFile, "w") as outf:
+            dat = datTemplate.replace("NONBONDED", "nonbondedMethod = NoCutoff\nuseOpenMMForce = False")
+            dat = dat.replace("steps                            = 0", "steps                            = %d" % nsteps)
+            dat = dat.replace("saveEnergy                       = 0", "saveEnergy                       = 1")
+            outf.write(dat + "outStep = True\noutPotentialEnergy = True\noutTemperature = True\noutSeparator = ;\n")
+        cwd = os.getcwd()
+        os.chdir(self.workDir)
+        try:
+            sim = ActOpenMMSim(pdbfile=pdbFile, datfile=datFile, xmlfile=xmlFile,
+                               txtfile=os.path.join(self.workDir, "output.txt"), verbose=False)
+            sim.run()
+            epot = sim.potential_energy()
+            del sim
+        finally:
+            os.chdir(cwd)
+        # A bound molecule
+        self.assertLess(epot, 0)
+        with open(os.path.join(self.workDir, "energy.csv")) as inf:
+            rows = [ line for line in inf if not line.startswith("#") ]
+        self.assertEqual(nsteps, len(rows))
+        for row in rows:
+            self.assertLess(float(row.split(";")[1]), 0)
+
 @unittest.skipUnless(haveOpenMM, "OpenMM not available")
 class SlaterScreeningTest(unittest.TestCase):
     def test_recognized_slater_is_rejected(self):
