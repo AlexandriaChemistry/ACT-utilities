@@ -915,7 +915,8 @@ class ActOpenMMSim:
             elif param.startswith("prefactor-"):
                 VdWDict[self.vdw]["prefactor"] = param[10:]
             elif param.startswith("nexcl"):
-                if not self.nexcl:
+                # Zero is a number of exclusions as well
+                if self.nexcl is None:
                     self.nexcl = value
                 elif self.nexcl != value:
                     sys.exit("Different exclusions provided for different forces, this is not supported")
@@ -1254,7 +1255,7 @@ class ActOpenMMSim:
             self.nb_excl[cexcl] = allParam
 
     def add_customnb_excls(self, myforce):
-        if not self.nexcl:
+        if self.nexcl is None:
             sys.exit("Please make sure nexcl is set in your force field file")
         self.txt.write("Will generate %d exclusions for %s\n" % ( self.nexcl, myforce.getName() ) )
         # First generate exclusions based on real bonds

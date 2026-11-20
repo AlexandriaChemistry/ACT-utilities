@@ -1,0 +1,56 @@
+#
+# This source file is part of the Alexandria Chemistry Toolkit.
+#
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License
+# as published by the Free Software Foundation; either version 2
+# of the License, or (at your option) any later version.
+#
+# Runs when ACT-utilities is installed. Until version 1.9b the modules were
+# in site-packages/act with a file act.pth next to it. That directory now
+# holds the Python package act of ACT, and the modules are in
+# site-packages/act_utilities. This script removes what the earlier versions
+# installed, file by file, and nothing else: files of the package act, or of
+# anybody else, stay where they are.
+#
+set(_site "$ENV{DESTDIR}@ACT_PYTHON_SITE_PATH@")
+set(_old  "${_site}/act")
+set(_removed 0)
+
+if(EXISTS "${_site}/act.pth")
+    # Only the file of ACT-utilities, which has the one line "act"
+    file(READ "${_site}/act.pth" _pth)
+    string(STRIP "${_pth}" _pth)
+    if(_pth STREQUAL "act")
+        file(REMOVE "${_site}/act.pth")
+        math(EXPR _removed "${_removed} + 1")
+    endif()
+endif()
+
+foreach(_module @ACT_OLD_MODULES@)
+    if(EXISTS "${_old}/${_module}")
+        file(REMOVE "${_old}/${_module}")
+        math(EXPR _removed "${_removed} + 1")
+    endif()
+    # The files that Python compiled from the module
+    string(REGEX REPLACE "\\.py$" "" _name "${_module}")
+    file(GLOB _compiled "${_old}/__pycache__/${_name}.cpython-*.pyc")
+    if(_compiled)
+        file(REMOVE ${_compiled})
+    endif()
+endforeach()
+
+# The directories, if nothing is left in them
+foreach(_dir "${_old}/__pycache__" "${_old}")
+    if(IS_DIRECTORY "${_dir}")
+        file(GLOB _left "${_dir}/*")
+        if(NOT _left)
+            file(REMOVE_RECURSE "${_dir}")
+        endif()
+    endif()
+endforeach()
+
+if(_removed GREATER 0)
+    message(STATUS "Removed ${_removed} files of an earlier ACT-utilities from ${_old}; "
+                   "the modules are in ${_site}/act_utilities now")
+endif()

@@ -38,13 +38,16 @@ jobs:
         run: |
           prefix=${RUNNER_TEMP}/act-utilities
           pyver=$(python -c 'import sys; print("%d.%d" % sys.version_info[:2])')
-          PYTHONPATH=${prefix}/lib/python${pyver}/site-packages/act \
-              python -c "import actutils, molprops, mol_json, molutils, elements"
+          PYTHONPATH=${prefix}/lib/python${pyver}/site-packages/act_utilities \
+              python -c "import actutils, molprops, mol_json, molutils, elements, act_legacy"
+          # The directory site-packages/act is that of the package act of ACT
+          test ! -e ${prefix}/lib/python${pyver}/site-packages/act
+          test ! -e ${prefix}/lib/python${pyver}/site-packages/act.pth
           ${prefix}/bin/coords2molprop -h > /dev/null
           test -f ${prefix}/share/act/atom_bond.xml
           test -f ${prefix}/share/act/atomtypes_gui.csv
           # The installed modules find the installed data files
-          PYTHONPATH=${prefix}/lib/python${pyver}/site-packages/act \
+          PYTHONPATH=${prefix}/lib/python${pyver}/site-packages/act_utilities \
               python -c "import actutils; d = actutils.actdata(); print(d); assert d.startswith('${prefix}')"
       - name: Run the tests
         shell: bash -el {0}

@@ -5,7 +5,7 @@ This directory contains Python scripts and utilities that complement the C++ `al
 ## Contents
 
 ### Core libraries
-- **act.py** — High-level Python API wrapping common `alexandria` command invocations.
+- **act_legacy.py** — The class `ACT` to run training with `alexandria`, until ACT 1.9b in `act.py`. The Python package `act` of ACT replaces it and offers the class as `act.legacy.ACT`.
 - **actutils.py** — General utility functions shared by the other scripts (file handling, unit conversion, logging).
 - **molutils.py** — Molecular structure helpers (geometry manipulation, formula parsing).
 - **molprops.py** — Python representation of molecular properties; parses ACT XML/CSV output.
