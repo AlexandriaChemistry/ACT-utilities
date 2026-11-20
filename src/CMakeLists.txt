@@ -24,7 +24,10 @@
 # Boston, MA  02110-1301, USA.
 #
 # Installation path for ACT python code. Depends from CMAKE_INSTALL_PREFIX.
-set(ACT_PYTHON_LIB_PATH ${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_PYTHON_LIBDIR}/act)
+# The directory site-packages/act, where the modules were until version 1.9b,
+# belongs to the Python package act of ACT now.
+set(ACT_PYTHON_SITE_PATH ${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_PYTHON_LIBDIR})
+set(ACT_PYTHON_LIB_PATH ${ACT_PYTHON_SITE_PATH}/act_utilities)
 
 # Configure 'sys.path' in the executable scripts, so they may find the library.
 configure_file(gauss2molprop.cmakein gauss2molprop @ONLY)
@@ -37,11 +40,20 @@ configure_file(coords2molprop coords2molprop @ONLY)
 configure_file(donchev2molprop donchev2molprop @ONLY)
 configure_file(ncia2molprop ncia2molprop @ONLY)
 
-# The file act.pth adds the directory of the modules to the path of a Python
-# that has this site-packages, such as that of a conda environment, also when
-# its Python version differs from the one found here.
-# Library scripts
-install(FILES act.py DESTINATION ${ACT_PYTHON_LIB_PATH})
+# The modules of an installation with the earlier layout would be found
+# before the new ones, and act.py there would hide the package act of ACT.
+# Remove the files that the earlier versions installed, and only those.
+set(ACT_OLD_MODULES
+    act.py act_gct.py act_openmm.py actutils.py atomic_heat_of_formation.py
+    dofit.py elements.py get_csv_rows.py get_mol_dict.py jacobi.py
+    mol_csv_api.py mol_json.py molprops.py molutils.py
+    ncia_reader_from_xyz.py read_gaussian_log.py)
+configure_file(remove_old_layout.cmake.in remove_old_layout.cmake @ONLY)
+install(SCRIPT ${CMAKE_CURRENT_BINARY_DIR}/remove_old_layout.cmake)
+
+# Library scripts. The class ACT was in act.py, the name of the package of
+# ACT; that package offers it as act.legacy.ACT.
+install(FILES act_legacy.py DESTINATION ${ACT_PYTHON_LIB_PATH})
 install(FILES act_gct.py DESTINATION ${ACT_PYTHON_LIB_PATH})
 install(FILES act_openmm.py DESTINATION ${ACT_PYTHON_LIB_PATH})
 install(FILES actutils.py DESTINATION ${ACT_PYTHON_LIB_PATH})
@@ -70,9 +82,12 @@ install(PROGRAMS view_fitness DESTINATION bin)
 install(PROGRAMS ${CMAKE_CURRENT_BINARY_DIR}/donchev2molprop DESTINATION bin)
 install(PROGRAMS ${CMAKE_CURRENT_BINARY_DIR}/ncia2molprop DESTINATION bin)
 install(PROGRAMS ${CMAKE_CURRENT_BINARY_DIR}/actgui DESTINATION bin)
-file(WRITE ${CMAKE_CURRENT_BINARY_DIR}/act.pth "act\n")
-install(FILES ${CMAKE_CURRENT_BINARY_DIR}/act.pth
-        DESTINATION ${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_PYTHON_LIBDIR})
+# The file act_utilities.pth adds the directory of the modules to the path
+# of a Python that has this site-packages, such as that of a conda
+# environment, also when its Python version differs from the one found here.
+file(WRITE ${CMAKE_CURRENT_BINARY_DIR}/act_utilities.pth "act_utilities\n")
+install(FILES ${CMAKE_CURRENT_BINARY_DIR}/act_utilities.pth
+        DESTINATION ${ACT_PYTHON_SITE_PATH})
 
 # Utilities that need no configuration
 install(PROGRAMS annealing_plot.py calc_tip4p_dummy.py energy_distributions replace_interactions

@@ -26,11 +26,18 @@ installed, or into the conda environment used for ACT:
     cmake -S . -B build -DCMAKE_INSTALL_PREFIX=<prefix>
     cmake --install build
 
-The modules go to `<prefix>/lib/pythonX.Y/site-packages/act`, the scripts
-to `<prefix>/bin` and the data files to `<prefix>/share/act`. A Python that
-uses this site-packages, such as that of a conda environment, finds the
-modules through the file `act.pth`; otherwise
+The modules go to `<prefix>/lib/pythonX.Y/site-packages/act_utilities`, the
+scripts to `<prefix>/bin` and the data files to `<prefix>/share/act`. A
+Python that uses this site-packages, such as that of a conda environment,
+finds the modules through the file `act_utilities.pth`; otherwise
 `source <prefix>/bin/ACTRC` of ACT adds them to `PYTHONPATH`.
+
+Until version 1.9b the modules were in `site-packages/act`. That directory
+is now the Python package `act` of ACT, the interface to the `alexandria`
+program. Installing this version removes the files of the earlier layout
+from the same prefix. The module `act.py` with the class `ACT` has the name
+`act_legacy.py` now; use `from act.legacy import ACT` with ACT installed, or
+`from act_legacy import ACT`.
 
 ## Tests
 

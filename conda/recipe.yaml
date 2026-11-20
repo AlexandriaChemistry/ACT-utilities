@@ -43,6 +43,7 @@ tests:
         - actutils
         - molprops
         - mol_json
+        - act_legacy
       pip_check: false
   - script:
       - coords2molprop -h
@@ -50,6 +51,8 @@ tests:
       - test -f $PREFIX/share/act/atom_bond.xml
       - test -f $PREFIX/share/act/atomtypes_gui.csv
       - python -c "import actutils; assert actutils.actdata().endswith('share/act')"
+      # The name act is that of the Python package of ACT
+      - python -c "import importlib.util as u; assert u.find_spec('act') is None"
 
 about:
   homepage: https://github.com/AlexandriaChemistry/ACT-utilities

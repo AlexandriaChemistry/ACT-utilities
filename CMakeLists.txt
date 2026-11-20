@@ -6,10 +6,12 @@
 #   cmake -S . -B build -DCMAKE_INSTALL_PREFIX=<prefix of ACT>
 #   cmake --install build
 #
-# The modules go to <prefix>/lib/pythonX.Y/site-packages/act, the scripts to
-# <prefix>/bin and the data files to <prefix>/share/act. The file act.pth
-# makes a Python with this site-packages find the modules, otherwise the
-# file ACTRC of ACT adds them to PYTHONPATH.
+# The modules go to <prefix>/lib/pythonX.Y/site-packages/act_utilities, the
+# scripts to <prefix>/bin and the data files to <prefix>/share/act. The file
+# act_utilities.pth makes a Python with this site-packages find the modules,
+# otherwise the file ACTRC of ACT adds them to PYTHONPATH. The directory
+# site-packages/act, where the modules were until version 1.9b, is that of
+# the Python package act of ACT; the installation removes the old files.
 #
 cmake_minimum_required(VERSION 3.24)
 
