@@ -178,13 +178,13 @@ def run_merge(mols, block_length, methods:str, edit_mp:str, xmldir:str, gentop:s
     
     if len(files.strip().split()):
       new_temp = ( "temp_%s_%s " % ( block_index, output ) )
-      command = ("%s -ff %s -o %s -maxwarn 0 -mp %s" % (edit_mp, gentop, new_temp, files))
+      command = ("%s -ff %s -o %s -mp %s" % (edit_mp, gentop, new_temp, files))
       temp_files += " " + new_temp
       print(command)
       os.system(command)
 
   if len(temp_files.strip().split()) > 0:
-    command = ("%s -ff %s -o %s -maxwarn 0 -mp %s" % (edit_mp, gentop, output, temp_files))
+    command = ("%s -ff %s -o %s -mp %s" % (edit_mp, gentop, output, temp_files))
     if len(database) > 0:
       command += " -db " + database
     print(command)
