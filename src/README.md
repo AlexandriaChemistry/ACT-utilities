@@ -32,7 +32,6 @@ This directory contains Python scripts and utilities that complement the C++ `al
 
 ### Analysis and visualisation
 - **dofit.py** — Fits model curves to property data (e.g. force-field vs. QM energies).
-- **actgui** — Graphical interface for visualising ACT training results.
 - **view_fitness** — Plots fitness convergence curves from GA training output.
 - **plot_convergence** — Plots parameter convergence during training.
 - **dimer_scan** — Scans dimer interaction energies as a function of separation.

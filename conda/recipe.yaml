@@ -49,7 +49,7 @@ tests:
       - coords2molprop -h
       - test -f $PREFIX/bin/gauss2molprop
       - test -f $PREFIX/share/act/atom_bond.xml
-      - test -f $PREFIX/share/act/atomtypes_gui.csv
+      - test -f $PREFIX/share/act/vsite4_amine.json
       - python -c "import actutils; assert actutils.actdata().endswith('share/act')"
       # The name act is that of the Python package of ACT
       - python -c "import importlib.util as u; assert u.find_spec('act') is None"
