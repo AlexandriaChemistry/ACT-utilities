@@ -35,7 +35,6 @@ configure_file(generate_mp.cmakein generate_mp @ONLY)
 configure_file(mol_csv_api.py.cmakein mol_csv_api.py @ONLY)
 configure_file(molselect.cmakein molselect @ONLY)
 configure_file(reshuffle_selection.cmakein reshuffle_selection @ONLY)
-configure_file(actgui actgui @ONLY)
 configure_file(coords2molprop coords2molprop @ONLY)
 configure_file(donchev2molprop donchev2molprop @ONLY)
 configure_file(ncia2molprop ncia2molprop @ONLY)
@@ -81,7 +80,6 @@ install(PROGRAMS plot_convergence DESTINATION bin)
 install(PROGRAMS view_fitness DESTINATION bin)
 install(PROGRAMS ${CMAKE_CURRENT_BINARY_DIR}/donchev2molprop DESTINATION bin)
 install(PROGRAMS ${CMAKE_CURRENT_BINARY_DIR}/ncia2molprop DESTINATION bin)
-install(PROGRAMS ${CMAKE_CURRENT_BINARY_DIR}/actgui DESTINATION bin)
 # The file act_utilities.pth adds the directory of the modules to the path
 # of a Python that has this site-packages, such as that of a conda
 # environment, also when its Python version differs from the one found here.

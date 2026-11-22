@@ -45,7 +45,7 @@ jobs:
           test ! -e ${prefix}/lib/python${pyver}/site-packages/act.pth
           ${prefix}/bin/coords2molprop -h > /dev/null
           test -f ${prefix}/share/act/atom_bond.xml
-          test -f ${prefix}/share/act/atomtypes_gui.csv
+          test -f ${prefix}/share/act/vsite4_amine.json
           # The installed modules find the installed data files
           PYTHONPATH=${prefix}/lib/python${pyver}/site-packages/act_utilities \
               python -c "import actutils; d = actutils.actdata(); print(d); assert d.startswith('${prefix}')"
