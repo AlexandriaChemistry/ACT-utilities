@@ -11,7 +11,6 @@ sys.path.insert(1, "@ACT_PYTHON_LIB_PATH@")
 
 from molprops import *
 from get_mol_dict import *
-from gaff_to_alexandria import GaffToAlexandria
 #import mol_csv_api as piskot
 
 
@@ -38,8 +37,8 @@ def parseArguments():
     parser.add_argument("-v", "--verbose", help="write debug statements", action="store_true")
     parser.add_argument("-int", "--int_e", help="interaction energy", type=float, default="")
 
-    parser.add_argument("-charge_a", "--charge_a", help="charge of frag A", type=int, default="")
-    parser.add_argument("-charge_b", "--charge_b", help="charge of frag B", type=int, default="")
+    parser.add_argument("-charge_a", "--charge_a", help="charge of frag A, default 0", type=int, default=0)
+    parser.add_argument("-charge_b", "--charge_b", help="charge of frag B, default 0", type=int, default=0)
     
 #    parser.add_argument("-mult_b", "--multiplicity_b", help="multiplicity of frag A", type=int, default="")
 #    parser.add_argument("-mult_a", "--multiplicity_a", help="multiplicity of frag A", type=int, default="")
@@ -62,12 +61,12 @@ def parseArguments():
 
 def read_auxA(infile:str):
     md = MoleculeDict()
-    if not md.read(infile, "xyz"):
+    if not md.read(infile, infile, "xyz", args.charge_a):
         sys.exit("Could not read file %s" % infile)
-    global weight_B
-    weight_B = str(md.mol_weight)
-    global form_B
-    form_B = str(md.formula)
+    global weight_A
+    weight_A = str(md.mol_weight)
+    global form_A
+    form_A = str(md.formula)
     global inchiA
     inchiA = str(md.inchi)
     return mp1
@@ -75,12 +74,12 @@ def read_auxA(infile:str):
 
 def read_auxB(infile:str):
     md = MoleculeDict()
-    if not md.read(infile, "xyz"):
+    if not md.read(infile, infile, "xyz", args.charge_b):
         sys.exit("Could not read file %s" % infile)
-    global weight_A
-    weight_A = str(md.mol_weight)
-    global form_A
-    form_A = str(md.formula)
+    global weight_B
+    weight_B = str(md.mol_weight)
+    global form_B
+    form_B = str(md.formula)
     global inchiB
     inchiB = str(md.inchi)
 
@@ -93,7 +92,7 @@ def read_auxB(infile:str):
 def read_xyz(infile:str) -> Molprop:
     # Create a molecule reader
     md = MoleculeDict()
-    if not md.read(infile, "xyz"):
+    if not md.read(infile, infile, "xyz", args.charge_a + args.charge_b):
         sys.exit("Could not read file %s" % infile)
     # Now we have read the atoms, coordinates and all that
     # now the energy needs to be read from somewhere too.
@@ -128,12 +127,9 @@ def read_xyz(infile:str) -> Molprop:
     rangeB=[*range(args.sel_a_end + 1,args.sel_b_end + 1)]
 ###Loop for a fragment A
 
-    g2a      = GaffToAlexandria()
     atomtypes = []
     atomname  = []
 
-# Auxiliary structure to rename atom types
-#move above    g2a      = GaffToAlexandria()
     # Now create a molprop object
     mp.add_experiment(exper)
     mp.add_prop("mass", str(md.mol_weight))
@@ -177,16 +173,15 @@ def read_xyz(infile:str) -> Molprop:
         atomtypes = []
         atomname  = []
 #        print(str(md.atoms))
+        # The Alexandria atom types that get_mol_dict assigns, as in coords2molprop
         for atom in md.atoms:
-            atomtypes.append(md.atoms[atom]["atomtype"])
-            atomname.append(md.atoms[atom]["atomtype"])
-#            print(str(atomtypes))
+            atomtypes.append(atom["obtype"])
+            atomname.append(atom["atomtype"])
         for i in range(len(atomtypes)):
-            alextype = g2a.rename(atomtypes[i])
-            exper.add_atom(atomname[i], alextype, i+1, "pm",
-                       100*md.atoms[i+1]["X"],
-                       100*md.atoms[i+1]["Y"],
-                       100*md.atoms[i+1]["Z"],
+            exper.add_atom(atomname[i], atomtypes[i], i+1, "pm",
+                       100*md.atoms[i]["X"],
+                       100*md.atoms[i]["Y"],
+                       100*md.atoms[i]["Z"],
                        "Hartree/Bohr", 0, 0, 0, None)
 
 
@@ -261,4 +256,5 @@ if __name__ == '__main__':
 ##        molprops = Molprops()
 ##        molprops.add_molecule(wat1
 
-    print("XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX")
+    molprops.close()
+    print("Wrote %s" % args.outfile)

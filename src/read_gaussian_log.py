@@ -5,7 +5,6 @@
 import gzip, math, os
 from get_mol_dict import *
 from molprops import *
-from gaff_to_alexandria import *
 from get_csv_rows import *
 from elements import AtomNumberToAtomName
 from dofit import *
@@ -452,12 +451,12 @@ class GaussianReader:
             self.tcmap["Scomponent"].append(float(words[2]))
         return 6
  
-    def add_atoms(self, g2a) -> bool:
+    def add_atoms(self) -> bool:
         if len(self.atomtypes) != self.natom():
-            print("Found %d atomtype for %d coordinates in %s" % ( len(self.atomtypes), self.natom(), infile))
+            print("Found %d atomtype for %d coordinates in %s" % ( len(self.atomtypes), self.natom(), self.molname))
             return False
         for i in range(len(self.atomtypes)):
-            alextype = g2a.rename(self.atomtypes[i])
+            alextype = self.atomtypes[i]
             qmap = {}
             if len(self.qEsp) == len(self.atomtypes):
                 qmap["ESP"] = self.qEsp[i]
@@ -612,13 +611,11 @@ class GaussianReader:
             self.exper.extract_thermo(self.tcmap, self.atomname, ahof)
             
             md = MoleculeDict()
-            if not md.from_coords_elements(self.atomname, self.coordinates(), "alexandria", self.charge):
+            if not md.from_coords_elements(self.molname, self.atomname, self.coordinates(), self.charge):
                 print("Cannot deduce weight or formula from %s" % infile)
                 return None
-            self.atomtypes = []
-            for atom in md.atoms:
-                self.atomtypes.append(md.atoms[atom]["atomtype"])
-            g2a      = GaffToAlexandria()
+            # The Alexandria atom types that get_mol_dict assigns
+            self.atomtypes = [ atom["obtype"] for atom in md.atoms ]
             if None != self.tcmap["E0"]:# and None != self.tcmap["Ezpe"]:
                 self.tcmap["Temp"]   = 0
                 ahof = AtomicHOF(leveloftheory, self.tcmap["Temp"], self.verbose)
@@ -633,7 +630,7 @@ class GaussianReader:
                         lots.append(leveloftheory)
                     charges.append(0.0)
                 eHF  = compute_dhform(self.tcmap["E0"], self.atomname,
-                                      g2a, ahof, lots, charges,
+                                      ahof, lots, charges,
                                       self.tcmap["Temp"])
                 if debug:
                     print("Computed eHF = %g" % eHF)
@@ -648,7 +645,7 @@ class GaussianReader:
                     self.exper.intensities = self.intensities
                 # We can only add the atoms after selecting the coordinates.
                 # This is likely a peculiarity of the Alexandria library.
-                if not self.add_atoms(g2a):
+                if not self.add_atoms():
                     print("Cannot add the atoms or atomtypes")
                     return None
                 if len(md.inchi) == 0:
