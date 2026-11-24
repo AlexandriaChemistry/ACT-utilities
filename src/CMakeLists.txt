@@ -44,7 +44,7 @@ configure_file(ncia2molprop ncia2molprop @ONLY)
 # Remove the files that the earlier versions installed, and only those.
 set(ACT_OLD_MODULES
     act.py act_gct.py act_openmm.py actutils.py atomic_heat_of_formation.py
-    dofit.py elements.py get_csv_rows.py get_mol_dict.py jacobi.py
+    dofit.py elements.py gaff_to_alexandria.py get_csv_rows.py get_mol_dict.py jacobi.py
     mol_csv_api.py mol_json.py molprops.py molutils.py
     ncia_reader_from_xyz.py read_gaussian_log.py)
 configure_file(remove_old_layout.cmake.in remove_old_layout.cmake @ONLY)
@@ -59,6 +59,7 @@ install(FILES actutils.py DESTINATION ${ACT_PYTHON_LIB_PATH})
 install(FILES atomic_heat_of_formation.py DESTINATION ${ACT_PYTHON_LIB_PATH})
 install(FILES dofit.py DESTINATION ${ACT_PYTHON_LIB_PATH})
 install(FILES elements.py DESTINATION ${ACT_PYTHON_LIB_PATH})
+install(FILES gaff_to_alexandria.py DESTINATION ${ACT_PYTHON_LIB_PATH})
 install(FILES get_csv_rows.py DESTINATION ${ACT_PYTHON_LIB_PATH})
 install(FILES get_mol_dict.py DESTINATION ${ACT_PYTHON_LIB_PATH})
 install(FILES jacobi.py DESTINATION ${ACT_PYTHON_LIB_PATH})

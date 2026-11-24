@@ -31,8 +31,7 @@ in the `bin` directory of the environment and the data files in its
 `share/act`. Use the environment that ACT is installed in, or set the
 environment variable `ACTDATA` to the data files, so that `alexandria` finds
 them. ACT itself, with the Python package `act`, is not on PyPI; install it
-with conda or from source. Open Babel, which `ncia2molprop` needs, is not
-installed along.
+with conda or from source.
 
 From source, before building ACT, into the prefix where ACT will be
 installed, or into the conda environment used for ACT:
