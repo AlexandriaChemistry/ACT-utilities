@@ -57,6 +57,7 @@ def parseArguments():
   strainhelp += (" or '%s'" % strained[-1])
   parser.add_argument("-unstrained", "--unstrained", help=strainhelp, action="store_true")
   parser.add_argument("-withoutoep", "--withoutoep",   help="Add compounds for which no OEP calcs have been done",                               action="store_true")
+  parser.add_argument("-lib",        "--library",      help="Directory of the Alexandria Library, which has the directory compounds, to find the OEP calculations. Without it the script only prints a message, unless -withoutoep is given", type=str, default=None)
                   
   args = parser.parse_args()
   return args
@@ -69,21 +70,25 @@ def getMustHaveList(M, MustHaveList):
       mols.append(m)
   return mols
 
-def has_oep_calcs(filename):
-  mylog = os.environ["AlexandriaLib"] + "/compounds/" + filename + "/" + filename + "-B3LYP-aug-cc-pVTZ.log.gz"
+def has_oep_calcs(library, filename):
+  mylog = os.path.join(library, "compounds", filename, filename + "-B3LYP-aug-cc-pVTZ.log.gz")
   if os.path.exists(mylog):
     return True
-  mylog = os.environ["LIQUIDS"] + "/MOLECULES/OEP/" + filename + "/" + filename + "-3-oep.log.gz"
+  # Development versions of the Alexandria Library
+  liquids = os.environ.get("LIQUIDS")
+  if not liquids:
+    return False
+  mylog = os.path.join(liquids, "MOLECULES", "OEP", filename, filename + "-3-oep.log.gz")
   return os.path.exists(mylog)
   
-def filter_noOEPcalcs(mols):
+def filter_noOEPcalcs(mols, library):
   filtered_mols = []
   no_oep = "without_oep.txt"
   with open(no_oep, "w") as outf:
     n = 0
     for mol in mols:
       molname = Path(mol.filename).stem
-      if has_oep_calcs(molname):
+      if has_oep_calcs(library, molname):
         filtered_mols.append(mol)
       else:
         outf.write("%s %s %s\n" % (mol.weight, mol.formula, molname))
@@ -204,6 +209,9 @@ def write_selection(M, mols, probability, filename, MustHaveList):
 
 if __name__ == '__main__':
   args       = parseArguments()
+  if not args.withoutoep and not args.library:
+    print("Give the directory of the Alexandria Library with -lib, or use -withoutoep, see -h.")
+    sys.exit(0)
 
   M = Molecules()
   M.read(args.alexandria)
@@ -215,7 +223,7 @@ if __name__ == '__main__':
     if M.mols[mol].is_supported() and not M.mols[mol].is_excluded():
       mols.append(M.mols[mol])
   if not args.withoutoep:
-    mols = filter_noOEPcalcs(mols)
+    mols = filter_noOEPcalcs(mols, args.library)
   if len(mols) == 0:
     sys.exit("No molecules left")
 
