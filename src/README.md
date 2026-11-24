@@ -10,7 +10,7 @@ This directory contains Python scripts and utilities that complement the C++ `al
 - **molutils.py** — Molecular structure helpers (geometry manipulation, formula parsing).
 - **molprops.py** — Python representation of molecular properties; parses ACT XML/CSV output.
 - **elements.py** — Periodic table data (atomic numbers, masses, covalent radii).
-- **gaff_to_alexandria.py** — Translates GAFF atom types to Alexandria ones for `read_gaussian_log.py`, with `atomtype_mapping.csv` from the data files if present.
+- **gaff_to_alexandria.py** — Translates GAFF atom types to Alexandria ones for `read_gaussian_log.py`, with the table `atomtype_mapping.csv` of the data files.
 - **mol_csv_api.py** — API for reading and writing the molecules of the Alexandria library, alexandria.json.
 - **mol_json.py** — Reads and writes alexandria.json in UTF-8.
 - **get_mol_dict.py** — Builds a dictionary of molecules from a directory of structure files.
