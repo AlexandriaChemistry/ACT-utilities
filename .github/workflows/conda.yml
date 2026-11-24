@@ -67,7 +67,8 @@ jobs:
         shell: bash -el {0}
         run: |
           ACT_UTILITIES_SOURCE=${{ github.workspace }} \
-            rattler-build build --recipe conda/recipe.yaml --channel conda-forge \
+            rattler-build build --recipe conda/recipe.yaml \
+                                --channel alexandriachemistry --channel conda-forge \
                                 --output-dir ${CONDA_OUT}
           ls -l ${CONDA_OUT}/noarch/*.conda
       - name: Keep the package

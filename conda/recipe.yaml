@@ -1,6 +1,7 @@
 # Recipe for the conda package act-utilities, built with rattler-build:
 #
-#   rattler-build build --recipe conda/recipe.yaml --channel conda-forge
+#   rattler-build build --recipe conda/recipe.yaml \
+#       --channel alexandriachemistry --channel conda-forge
 #
 # The source is the directory or archive in the environment variable
 # ACT_UTILITIES_SOURCE, by default this repository. The package alexandria of
@@ -36,6 +37,8 @@ requirements:
     - rdkit
     - pyyaml
     - xmltodict
+    # For dimer_scan and annealing_plot.py, on the channel alexandriachemistry
+    - plotxvg
 
 tests:
   - python:

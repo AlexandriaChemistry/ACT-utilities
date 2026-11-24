@@ -14,11 +14,11 @@ such as `alexandria.json`, `atom_bond.xml` and `atomprops.csv`, are in
 
 With conda, together with ACT:
 
-    conda install -c conda-forge alexandria
+    conda install -c alexandriachemistry -c conda-forge alexandria
 
 which installs this package, `act-utilities`, as well. On its own:
 
-    conda install -c conda-forge act-utilities
+    conda install -c alexandriachemistry -c conda-forge act-utilities
 
 With pip, from PyPI, into a virtual environment or another Python
 environment of your own:
@@ -67,7 +67,8 @@ variable `ACT_TESTDATA`. It is skipped without them, unless
 `conda/recipe.yaml` builds the package with
 [rattler-build](https://rattler.build):
 
-    rattler-build build --recipe conda/recipe.yaml --channel conda-forge
+    rattler-build build --recipe conda/recipe.yaml \
+        --channel alexandriachemistry --channel conda-forge
 
 The workflow `.github/workflows/conda.yml` does this for pull requests
 that change the recipe or what is installed. It uploads the package to the
