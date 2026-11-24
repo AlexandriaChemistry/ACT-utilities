@@ -35,7 +35,7 @@ from hatchling.builders.hooks.plugin.interface import BuildHookInterface
 ## The modules, from src
 MODULES = [
     "act_legacy.py", "act_gct.py", "act_openmm.py", "actutils.py",
-    "atomic_heat_of_formation.py", "dofit.py", "elements.py",
+    "atomic_heat_of_formation.py", "dofit.py", "elements.py", "gaff_to_alexandria.py",
     "get_csv_rows.py", "get_mol_dict.py", "jacobi.py", "mol_json.py",
     "molprops.py", "molutils.py", "ncia_reader_from_xyz.py",
     "read_gaussian_log.py", "mol_csv_api.py.cmakein",

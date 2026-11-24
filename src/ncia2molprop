@@ -11,8 +11,7 @@ sys.path.insert(1, "@ACT_PYTHON_LIB_PATH@")
 
 from molprops import *
 from get_mol_dict import *
-import openbabel as ob
-import lxml
+from gaff_to_alexandria import GaffToAlexandria
 #import mol_csv_api as piskot
 
 

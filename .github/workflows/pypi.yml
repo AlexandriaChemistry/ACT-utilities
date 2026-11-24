@@ -72,13 +72,10 @@ jobs:
           "${venv}/bin/python" -c "import actutils; d = actutils.actdata(); print(d); assert d == '${venv}/share/act'"
           # The name act is that of the Python package of ACT
           "${venv}/bin/python" -c "import importlib.util as u; assert u.find_spec('act') is None"
-          # The scripts that have the option -h and need no more than the
-          # dependencies of the package: gauss2molprop and generate_mp need
-          # the module gaff_to_alexandria, which is missing, ncia2molprop
-          # needs Open Babel, and annealing_plot.py has no options
-          for script in coords2molprop molselect reshuffle_selection donchev2molprop dimer_scan \
-                        plot_convergence view_fitness energy_distributions replace_interactions \
-                        calc_tip4p_dummy.py; do
+          # The scripts with the option -h; annealing_plot.py has none
+          for script in coords2molprop gauss2molprop generate_mp molselect reshuffle_selection \
+                        donchev2molprop ncia2molprop dimer_scan plot_convergence view_fitness \
+                        energy_distributions replace_interactions calc_tip4p_dummy.py; do
             "${venv}/bin/${script}" -h > /dev/null
           done
           ! grep -rl "@ACT_" "${venv}/bin" "${venv}"/lib/python*/site-packages/act_utilities

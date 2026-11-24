@@ -1,11 +1,5 @@
 #!/usr/bin/env python3
 
-try:
-    import openbabel as ob
-except:
-    print("OpenBabel not found. Check your PYTHONPATH environment variable.")
-    print("Proceed at your own risk")
-
 import argparse, csv, gc, os, sys
 
 # The ACT python modules of the installation. In the source tree, those next
@@ -107,8 +101,6 @@ def convert(csv_file:str, outfile:str, selection:str,
     ds = None
     if None != dimer_selection:
         ds = open(dimer_selection, "w")
-    obConversion = ob.OBConversion()
-    obConversion.SetInFormat("xyz")
     csv = open(csv_file, "r")
     csvlines = csv.readlines()
     csv.close()
@@ -159,9 +151,9 @@ def convert(csv_file:str, outfile:str, selection:str,
                 jrow += 1
         # Now we have the lowest energy for this complex at jrowMin
         # and we have a range of irow to jrow which all are the same dimer.
-        # We send the coordinates for the lowest energy structure to
-        # openbabel to get atomtypes and properties and use those for
-        # all the other complexes as well.
+        # The coordinates of the lowest energy structure give the atom
+        # types and properties, which are used for all the other complexes
+        # as well.
         # TODO: Check that all dimers have the same basisset, otherwise
         # we cannot compare them.
         natom       = natoms[0] + natoms[1]
@@ -296,7 +288,6 @@ def convert(csv_file:str, outfile:str, selection:str,
         with open(monomer_selection, "w") as ms:
             for fn in filenames.keys():
                 ms.write("%s|Train\n" % fn)
-    del obConversion
     molprops.close()
 
 def parse_args():
