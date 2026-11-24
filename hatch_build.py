@@ -52,8 +52,9 @@ SCRIPTS = [
 
 ## The data files, from share
 DATA = [
-    "alexandria.json", "atom_bond.xml", "atomization-energies-dft.csv",
-    "atomization-energies.csv", "atomprops.csv", "excluded_molecules.csv",
+    "alexandria.json", "atom_bond.xml", "atomtype_mapping.csv",
+    "atomization-energies-dft.csv", "atomization-energies.csv", "atomprops.csv",
+    "excluded_molecules.csv",
     "vsite2_halogen_sigma_holes.json", "vsite2_water_sigma_holes.json",
     "vsite3_alcohol_bisector.json", "vsite3_alcohol_lone_pairs.json",
     "vsite3_water_bisector.json", "vsite3_water_lone_pairs.json",
