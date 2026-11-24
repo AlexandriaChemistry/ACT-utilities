@@ -4,7 +4,6 @@
 install(FILES
         alexandria.json
         atom_bond.xml
-        atomtype_mapping.csv
         atomization-energies-dft.csv
         atomization-energies.csv
         atomprops.csv
