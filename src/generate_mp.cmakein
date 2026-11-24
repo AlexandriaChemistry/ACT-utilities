@@ -18,13 +18,8 @@ from read_gaussian_log import *
 
 debug = True
 
-def get_environ(myvar):
-  if myvar in os.environ:
-    return os.environ[myvar]
-  else:
-    sys.exit("Please set the %s environment variable" % myvar)
-    
-AlexandriaLib = get_environ("AlexandriaLib")
+# The directory of the Alexandria Library, from the option -lib
+AlexandriaLib = None
 # Some code for development versions of the Alexandria Library
 Liquids       = None
 if "LIQUIDS" in os.environ:
@@ -39,11 +34,11 @@ def parseArguments():
   download that database from the ACT wiki. Since the script can take quite some time
   it runs in parallel using all the available CPU cores on your computer.
   
-  You will need to set an environment variable called AlexandriaLib that points
-  to the directory containing the library, otherwise the script will exit with
-  an error message.
+  Give the directory containing the library with the option -lib. Without it
+  the script only prints a message, unless -clean is given.
   '''
   parser  = argparse.ArgumentParser(description=desc)
+  parser.add_argument("-lib", "--library",         help="Directory of the Alexandria Library, which has the directory compounds", type=str, default=None)
   alexdef = act_library_filename("alexandria.json")
   parser.add_argument("-a",      "--alexandria",   help="Compound definition file for reading, default "+alexdef,             type=str, default=alexdef)
   defmethods = "B3LYP-aug-cc-pVTZ"
@@ -205,6 +200,10 @@ if __name__ == "__main__":
   if args.clean:
     os.system("rm -f *.xml")
     exit(0)
+  if not args.library:
+    print("Give the directory of the Alexandria Library with -lib, see -h.")
+    exit(0)
+  AlexandriaLib = args.library
   alexandria  = get_alexandria()
   if not alexandria:
     print("Can not find the alexandria executable. Stopping script.")
