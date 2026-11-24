@@ -1,0 +1,41 @@
+# The package act-utilities for PyPI. The wheel has the layout of the
+# installation with CMake; hatch_build.py puts the files in it. CMake stays
+# the way to install from source before building ACT, see README.md.
+[build-system]
+requires = ["hatchling>=1.27"]
+build-backend = "hatchling.build"
+
+[project]
+name = "act-utilities"
+# The same as in CMakeLists.txt and conda/recipe.yaml
+version = "1.95b"
+description = "Python modules, scripts and data files of the Alexandria Chemistry Toolkit (ACT)"
+readme = "README.md"
+license = "GPL-3.0-or-later"
+license-files = ["LICENSE"]
+requires-python = ">=3.10"
+authors = [{ name = "The Alexandria Chemistry Toolkit developers" }]
+# The run requirements of conda/recipe.yaml, and plotXVG for dimer_scan and
+# annealing_plot.py
+dependencies = ["numpy", "matplotlib", "rdkit", "pyyaml", "xmltodict", "plotxvg"]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Operating System :: OS Independent",
+    "Topic :: Scientific/Engineering :: Chemistry",
+]
+
+[project.urls]
+Homepage = "https://github.com/AlexandriaChemistry/ACT-utilities"
+Repository = "https://github.com/AlexandriaChemistry/ACT-utilities"
+"Alexandria Chemistry Toolkit" = "https://github.com/AlexandriaChemistry/ACT"
+
+[tool.hatch.build.targets.sdist]
+include = ["src", "share", "conda", "CMakeLists.txt", "hatch_build.py", "README.md", "LICENSE"]
+exclude = ["__pycache__", "*.pyc"]
+
+[tool.hatch.build.targets.wheel]
+# The hook adds all files; there is no package directory to select
+bypass-selection = true
+
+[tool.hatch.build.targets.wheel.hooks.custom]
+path = "hatch_build.py"

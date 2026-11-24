@@ -20,6 +20,20 @@ which installs this package, `act-utilities`, as well. On its own:
 
     conda install -c conda-forge act-utilities
 
+With pip, from PyPI, into a virtual environment or another Python
+environment of your own:
+
+    pip install act-utilities
+
+This installs the same files as conda and CMake: the modules in
+`site-packages/act_utilities` with the file `act_utilities.pth`, the scripts
+in the `bin` directory of the environment and the data files in its
+`share/act`. Use the environment that ACT is installed in, or set the
+environment variable `ACTDATA` to the data files, so that `alexandria` finds
+them. ACT itself, with the Python package `act`, is not on PyPI; install it
+with conda or from source. Open Babel, which `ncia2molprop` needs, is not
+installed along.
+
 From source, before building ACT, into the prefix where ACT will be
 installed, or into the conda environment used for ACT:
 
@@ -69,3 +83,19 @@ A file that is on the channel is not replaced. For a new build of the same
 version, raise `build: number` in the recipe first; a new version starts
 again at 0. The package `alexandria` of ACT asks for the `act-utilities` of
 its own version.
+
+## PyPI package
+
+`pyproject.toml` and the build hook `hatch_build.py` make the sdist and the
+wheel of `act-utilities` for PyPI:
+
+    python -m build
+
+The wheel has the layout of the installation with CMake, and
+`hatch_build.py` has the lists of modules, scripts and data files of
+`src/CMakeLists.txt` and `share/CMakeLists.txt`: add a new file to both.
+The workflow `.github/workflows/pypi.yml` builds and tests the package for
+pull requests, compares its files with those that CMake installs, and
+publishes it on PyPI for a tag `v` plus the version, through trusted
+publishing. The version in `pyproject.toml` must be that of
+`conda/recipe.yaml`.
