@@ -62,18 +62,30 @@ the directory `src/act/testdata` of its source code, in the environment
 variable `ACT_TESTDATA`. It is skipped without them, unless
 `ACT_REQUIRE_OPENMM` is set; the CI of ACT runs it.
 
+## Version
+
+The version is not written in any file: it is that of the git tag
+`v<version>`. A release is a tag, such as `v1.95` for version 1.95, which
+the workflows below build and upload. A build that is N commits after the
+last tag has the version `<version>.postN`, such as `1.95.post3`;
+`conda/version.sh` prints it. The package `alexandria` of ACT asks for the
+`act-utilities` of its own version, so tag ACT-utilities with the version of
+ACT.
+
 ## Conda package
 
 `conda/recipe.yaml` builds the package with
-[rattler-build](https://rattler.build):
+[rattler-build](https://rattler.build), with the version from the
+environment variable `ACT_UTILITIES_VERSION`:
 
-    rattler-build build --recipe conda/recipe.yaml \
+    ACT_UTILITIES_VERSION=$(conda/version.sh) \
+        rattler-build build --recipe conda/recipe.yaml \
         --channel alexandriachemistry --channel conda-forge
 
 The workflow `.github/workflows/conda.yml` does this for pull requests
 that change the recipe or what is installed. It uploads the package to the
 channel `alexandriachemistry` on anaconda.org for a tag `v` plus the
-version in the recipe, with the label `main`, and for a run by hand (Actions,
+version, with the label `main`, and for a run by hand (Actions,
 Conda package, Run workflow, with Upload ticked) with the label that is
 given, `dev` by default:
 
@@ -81,13 +93,13 @@ given, `dev` by default:
 
 A file that is on the channel is not replaced. For a new build of the same
 version, raise `build: number` in the recipe first; a new version starts
-again at 0. The package `alexandria` of ACT asks for the `act-utilities` of
-its own version.
+again at 0.
 
 ## PyPI package
 
 `pyproject.toml` and the build hook `hatch_build.py` make the sdist and the
-wheel of `act-utilities` for PyPI:
+wheel of `act-utilities` for PyPI, with the version from the git tags
+through `hatch-vcs`:
 
     python -m build
 
@@ -97,5 +109,4 @@ The wheel has the layout of the installation with CMake, and
 The workflow `.github/workflows/pypi.yml` builds and tests the package for
 pull requests, compares its files with those that CMake installs, and
 publishes it on PyPI for a tag `v` plus the version, through trusted
-publishing. The version in `pyproject.toml` must be that of
-`conda/recipe.yaml`.
+publishing.

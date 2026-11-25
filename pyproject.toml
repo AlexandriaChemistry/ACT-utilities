@@ -2,13 +2,13 @@
 # installation with CMake; hatch_build.py puts the files in it. CMake stays
 # the way to install from source before building ACT, see README.md.
 [build-system]
-requires = ["hatchling>=1.27"]
+requires = ["hatchling>=1.27", "hatch-vcs>=0.4"]
 build-backend = "hatchling.build"
 
 [project]
 name = "act-utilities"
-# The same as in CMakeLists.txt and conda/recipe.yaml
-version = "1.95b"
+# The version is that of the git tag v<version>, see [tool.hatch.version]
+dynamic = ["version"]
 description = "Python modules, scripts and data files of the Alexandria Chemistry Toolkit (ACT)"
 readme = "README.md"
 license = "GPL-3.0-or-later"
@@ -28,6 +28,12 @@ classifiers = [
 Homepage = "https://github.com/AlexandriaChemistry/ACT-utilities"
 Repository = "https://github.com/AlexandriaChemistry/ACT-utilities"
 "Alexandria Chemistry Toolkit" = "https://github.com/AlexandriaChemistry/ACT"
+
+[tool.hatch.version]
+# From the git tag, as conda/version.sh gives it for the conda package:
+# v1.95 is 1.95, and three commits later 1.95.post3
+source = "vcs"
+raw-options = { version_scheme = "post-release", local_scheme = "no-local-version" }
 
 [tool.hatch.build.targets.sdist]
 include = ["src", "share", "conda", "CMakeLists.txt", "hatch_build.py", "README.md", "LICENSE"]
