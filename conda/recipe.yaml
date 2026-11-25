@@ -7,8 +7,12 @@
 # ACT_UTILITIES_SOURCE, by default this repository. The package alexandria of
 # ACT depends on this package.
 
+# The version is that of the git tag, see version.sh, which the workflow
+# conda.yml runs; for a local build:
+#
+#   ACT_UTILITIES_VERSION=$(conda/version.sh) rattler-build build ...
 context:
-  version: "1.95b"
+  version: ${{ env.get("ACT_UTILITIES_VERSION") }}
 
 package:
   name: act-utilities

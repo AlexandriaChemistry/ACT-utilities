@@ -7,9 +7,10 @@ run-name: ${{ github.actor }} builds the conda package act-utilities
 # given, dev by default. The upload needs the repository secret
 # ANACONDA_API_TOKEN.
 #
-# A file that is on the channel already is not replaced: the upload stops
-# with an error. Raise the build number in conda/recipe.yaml for a new build
-# of the same version.
+# The version is that of the tag, see conda/version.sh: v1.95 gives 1.95,
+# and a build three commits later 1.95.post3. A file that is on the channel
+# already is not replaced: the upload stops with an error. Raise the build
+# number in conda/recipe.yaml for a new build of the same version.
 on:
   push:
     tags:
@@ -41,18 +42,24 @@ jobs:
       CONDA_OUT: ${{ github.workspace }}/conda-out
     steps:
       - uses: actions/checkout@v6
-      - name: Check the version
+        with:
+          # The tags give the version
+          fetch-depth: 0
+      - name: Set the version
         run: |
-          recipe=$(sed -n 's/^  version: "\(.*\)"$/\1/p' conda/recipe.yaml)
-          echo "version in the recipe: ${recipe}"
-          if [ -z "${recipe}" ]; then
-            echo "::error::No version found in conda/recipe.yaml"
+          # The pushed tag v<version>, otherwise <version>.postN of the last
+          # tag, N commits before
+          if [ "${GITHUB_REF_TYPE}" = "tag" ]; then
+            version="${GITHUB_REF_NAME#v}"
+          else
+            version=$(conda/version.sh)
+          fi
+          echo "Version ${version}"
+          if ! echo "${version}" | grep -Eq '^[0-9]+(\.[0-9]+)*[a-z0-9.]*$'; then
+            echo "::error::${version} is not a version; tags are v<version>, such as v1.95"
             exit 1
           fi
-          if [ "${GITHUB_REF_TYPE}" = "tag" ] && [ "${GITHUB_REF_NAME}" != "v${recipe}" ]; then
-            echo "::error::Tag ${GITHUB_REF_NAME} does not match version ${recipe} in conda/recipe.yaml"
-            exit 1
-          fi
+          echo "ACT_UTILITIES_VERSION=${version}" >> "$GITHUB_ENV"
       - uses: conda-incubator/setup-miniconda@v4
         with:
           auto-update-conda: true
