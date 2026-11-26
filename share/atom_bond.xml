@@ -519,9 +519,9 @@
     </atomtypes>
   </atombondtype>
 
-  <atombondtype name="ca_0" smarts="[Mg]" charge="0" multiplicity="1">
+  <atombondtype name="ca_0" smarts="[Ca]" charge="0" multiplicity="1">
     <atomtypes>
-      <atomtype index="0" name="mg" atomnumber="20"/>
+      <atomtype index="0" name="ca" atomnumber="20"/>
     </atomtypes>
   </atombondtype>
 
